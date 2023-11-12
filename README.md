@@ -1,5 +1,5 @@
 # SecureApp [v0.1](CHANGELOG.md)
-<img align="right" height="256" src="path/to/your/app/icon.png"/>
+<img align="right" height="256" src="pic.png"/>
 
 **⚠️ WARNING: Early Development Stage**
 
