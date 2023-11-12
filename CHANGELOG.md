@@ -1,6 +1,6 @@
 # v.01
 - First code
-- - Project Features:
+   Project Features:
 
 ## 1. User Authentication
 - Secure user login and signup functionality.
