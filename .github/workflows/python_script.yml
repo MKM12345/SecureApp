@@ -1,0 +1,70 @@
+name: Run Python Script
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run_python_script:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x # Replace with your desired Python version
+      
+    - name: Install dependencies
+      run: |
+        pip install GitPython
+      shell: bash
+      
+    - name: Run Python Script
+      run: |
+        python - <<EOF
+import git
+from datetime import datetime
+
+repo = git.Repo(search_parent_directories=True)
+tags = repo.tags
+
+def get_version_name(tag):
+    return str(tag).split("refs/tags/")[1]
+
+def get_version_date(tag):
+    return datetime.utcfromtimestamp(tag.commit.committed_date).strftime('%Y-%m-%d')
+
+def generate_changelog():
+    changelog = "# Change Log\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n"
+
+    unreleased_changes = []
+
+    for tag in tags:
+        if tag.name != 'HEAD':
+            version_name = get_version_name(tag)
+            version_date = get_version_date(tag)
+
+            changelog += f"\n## [{version_name}] - {version_date}\n"
+
+            commits = list(repo.iter_commits(f"{tag.name}..{tag.name}^{{}}"))
+            if not commits:
+                unreleased_changes.extend(list(repo.iter_commits(f"{tag.name}^{{}}..HEAD")))
+
+            for commit in commits:
+                changelog += f"\n### {'Added' if 'feat' in commit.summary else 'Changed' if 'chore' in commit.summary else 'Fixed'}\n\n- {commit.summary}\n"
+
+    changelog += "\n## [Unreleased]\n"
+
+    for commit in unreleased_changes:
+        changelog += f"\n### {'Added' if 'feat' in commit.summary else 'Changed' if 'chore' in commit.summary else 'Fixed'}\n\n- {commit.summary}\n"
+
+    with open('CHANGELOG.md', 'w') as file:
+        file.write(changelog)
+
+if __name__ == "__main__":
+    generate_changelog()
+EOF
