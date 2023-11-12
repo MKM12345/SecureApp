@@ -26,44 +26,7 @@ jobs:
     - name: Run Python Script
       run: |
         python - >-
-          import git
-          from datetime import datetime
+          import subprocess
 
-          repo = git.Repo(search_parent_directories=True)
-          tags = repo.tags
-
-          def get_version_name(tag):
-              return str(tag).split("refs/tags/")[1]
-
-          def get_version_date(tag):
-              return datetime.utcfromtimestamp(tag.commit.committed_date).strftime('%Y-%m-%d')
-
-          def generate_changelog():
-              changelog = "# Change Log\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n"
-
-              unreleased_changes = []
-
-              for tag in tags:
-                  if tag.name != 'HEAD':
-                      version_name = get_version_name(tag)
-                      version_date = get_version_date(tag)
-
-                      changelog += f"\n## [{version_name}] - {version_date}\n"
-
-                      commits = list(repo.iter_commits(f"{tag.name}..{tag.name}^{{}}"))
-                      if not commits:
-                          unreleased_changes.extend(list(repo.iter_commits(f"{tag.name}^{{}}..HEAD")))
-
-                      for commit in commits:
-                          changelog += f"\n### {'Added' if 'feat' in commit.summary else 'Changed' if 'chore' in commit.summary else 'Fixed'}\n\n- {commit.summary}\n"
-
-              changelog += "\n## [Unreleased]\n"
-
-              for commit in unreleased_changes:
-                  changelog += f"\n### {'Added' if 'feat' in commit.summary else 'Changed' if 'chore' in commit.summary else 'Fixed'}\n\n- {commit.summary}\n"
-
-              with open('CHANGELOG.md', 'w') as file:
-                  file.write(changelog)
-
-          if __name__ == "__main__":
-              generate_changelog()
+          result = subprocess.run(['git', 'log', '--pretty=format:%H,%an,%ad,%s'], stdout=subprocess.PIPE, text=True)
+          print(result.stdout)
